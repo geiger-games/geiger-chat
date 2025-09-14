@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GeigerChat</title>
+    <style>
+        #chatbar { position: fixed; left: 40%; top: 80%; width: 40%; height: 10%; transform: translate(-50%, -50%); }
+        #enterbtn { position: fixed; left: 70%; top: 80%; width: 20%; height: 10%; transform: translate(-50%, -50%); }
+        #msgs { display: flex; flex-direction: column; max-width: 80%; margin: 2em auto; gap: 0.3em; }
+        .msg { padding: 0.5em 1em; border-radius: 12px; background-color: #f1f1f1; max-width: 70%; word-wrap: break-word; transition: transform 0.2s ease, background-color 0.2s ease; }
+    </style>
+</head>
+<body>
+    <div id="msgs"></div>
+    <input type="text" id="chatbar" placeholder="Chat here!">
+    <button id="enterbtn">Enter</button>
+
+    <script>
+    const bannedWords = ["btt","ojhhb","ojhhfs","gvdl","tiju","cjudi","gvdlbtt","bttipmf","jejpu","bttgvdl","cvuugvdl"];
+    const chatBar = document.getElementById("chatbar");
+    const enterBtn = document.getElementById("enterbtn");
+    const content = document.getElementById("msgs");
+
+    function decode(str){ return str.split('').map(c=>String.fromCharCode(c.charCodeAt(0)-1)).join(''); }
+    function normalizeText(str){ return str.normalize("NFD").replace(/[\u0300-\u036f]/g,""); }
+
+    // Escape HTML but allow basic tags
+    function sanitize(text){
+        return text.replace(/<\s*script[^>]*>.*?<\s*\/\s*script\s*>/gi, "[code injection]");
+    }
+
+    function cleanText(text){
+        let cleaned = normalizeText(text);
+        bannedWords.forEach(word => {
+            cleaned = cleaned.replace(new RegExp(`\\b${decode(word)}\\b`,"gi"), "[expletive]");
+        });
+        return cleaned;
+    }
+
+    let canPost = true; // slowmode flag
+
+    (async()=>{
+        async function getMessages(){
+            try{
+                const res = await fetch("https://getpantry.cloud/apiv1/pantry/YOUR-PANTRY-ID/basket/messages");
+                if(!res.ok) throw new Error(res.status);
+                const d = await res.json();
+                const data = d["_"] || [];
+                content.innerHTML = "";
+                data.forEach(msgText=>{
+                    const div = document.createElement("div");
+                    div.classList.add("msg");
+                    div.innerHTML = sanitize(msgText);
+                    content.appendChild(div);
+                });
+                content.scrollTop = content.scrollHeight;
+            }catch(e){ console.error("Fetch error:", e); }
+        }
+
+        getMessages();
+
+        enterBtn.addEventListener("click", async()=>{
+            if(!canPost){ alert("Slowmode active! Go touch some grass."); return; }
+            let msg = chatBar.value.trim();
+            if(!msg) return;
+            msg = cleanText(msg);
+
+            try{
+                // fetch current messages
+                const res = await fetch("https://getpantry.cloud/apiv1/pantry/60a648db-d0da-463b-93f6-627dde4d4a73/basket/messages");
+                const d = await res.json();
+                let data = d["_"] || [];
+                data.push(`${username}: ${msg}`);
+
+                await fetch("https://getpantry.cloud/apiv1/pantry/60a648db-d0da-463b-93f6-627dde4d4a73/basket/messages", {
+                    method:"POST",
+                    headers:{"Content-Type":"application/json"},
+                    body:JSON.stringify({"_":data})
+                });
+
+                // update UI immediately
+                const div = document.createElement("div");
+                div.classList.add("msg");
+                div.innerHTML = sanitize(`${username}: ${msg}`);
+                content.appendChild(div);
+                content.scrollTop = content.scrollHeight;
+                chatBar.value = "";
+
+                // slowmode
+                canPost = false;
+                const delay = Math.floor(Math.random()*5000)+5000; // 5-10 sec
+                setTimeout(()=>{ canPost=true; }, delay);
+
+            }catch(e){ console.error("Post error:", e); }
+        });
+    })();
+    </script>
+</body>
+</html>
