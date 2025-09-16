@@ -71,7 +71,7 @@
                 const res = await fetch("https://getpantry.cloud/apiv1/pantry/60a648db-d0da-463b-93f6-627dde4d4a73/basket/messages");
                 const d = await res.json();
                 let data = d["_"] || [];
-                data.push(`${username}: ${msg}`);
+                data.push(msg);
 
                 await fetch("https://getpantry.cloud/apiv1/pantry/60a648db-d0da-463b-93f6-627dde4d4a73/basket/messages", {
                     method:"POST",
