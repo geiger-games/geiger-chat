@@ -13,7 +13,7 @@
 </head>
 <body>
     <div id="msgs"></div>
-    <input type="text" id="chatbar" placeholder="Chat here!">
+    <input type="text" id="chatbar" placeholder="Chat here!" maxlength="150">
     <button id="enterbtn">Enter</button>
 
     <script>
@@ -27,11 +27,23 @@
 
     // Escape HTML but allow basic tags
     function sanitize(text){
-        return text.replace(/<\s*script[^>]*>.*?<\s*\/\s*script\s*>/gi, "[code injection]");
+        let escaped = text.replace(/&/g,"&amp;")
+                          .replace(/</g,"&lt;")
+                          .replace(/>/g,"&gt;");
+        return escaped;
+    }
+
+    function markdown(text){
+        let newText = text.replace(/\*\*(.+?)\*\*/gi, "<b>$1</b>");
+        newText = newText.replace(/\*(.+?)\*/gi, "<i>$1</i>");
+        ["red", "orange", "yellow", "green", "blue", "purple"].forEach(color => {
+            newText = newText.replace(new RegExp(`<${color}>(.+?)</${color}>`, "gi"), `<p style="color: ${color};">$1</p>`);
+        });
+        return newText;
     }
 
     function cleanText(text){
-        let cleaned = normalizeText(text);
+        let cleaned = markdown(sanitize(normalizeText(text)));
         bannedWords.forEach(word => {
             cleaned = cleaned.replace(new RegExp(`\\b${decode(word)}\\b`,"gi"), "[expletive]");
         });
