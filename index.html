@@ -37,7 +37,7 @@
         let newText = text.replace(/\*\*(.+?)\*\*/gi, "<b>$1</b>");
         newText = newText.replace(/\*(.+?)\*/gi, "<i>$1</i>");
         ["red", "orange", "yellow", "green", "blue", "purple"].forEach(color => {
-            newText = newText.replace(new RegExp(`<${color}>(.+?)</${color}>`, "gi"), `<p style="color: ${color};">$1</p>`);
+            newText = newText.replace(new RegExp(`&lt;${color}&gt;(.+?)&lt;/${color}&gt;`, "gi"), `<p style="color: ${color};">$1</p>`);
         });
         return newText;
     }
