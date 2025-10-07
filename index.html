@@ -8,6 +8,7 @@
         #chatbar { position: fixed; left: 40%; top: 80%; width: 40%; height: 10%; transform: translate(-50%, -50%); }
         #enterbtn { position: fixed; left: 70%; top: 80%; width: 20%; height: 10%; transform: translate(-50%, -50%); }
         #msgs { display: flex; flex-direction: column; max-width: 80%; margin: 2em auto; gap: 0.3em; }
+        #changeUsername { position: fixed; left: 90%; top: 0%; width: 10%; height: 10%; }
         .msg { padding: 0.5em 1em; border-radius: 12px; background-color: #f1f1f1; max-width: 70%; word-wrap: break-word; transition: transform 0.2s ease, background-color 0.2s ease; }
         .msg.your { background-color: blueviolet; }
     </style>
@@ -16,16 +17,18 @@
     <div id="msgs"></div>
     <input type="text" id="chatbar" placeholder="Chat here!" maxlength="150">
     <button id="enterbtn">Enter</button>
+    <button id="changeUsername">Change username</button>
 
     <script>
     const bannedWords = ["btt","ojhhb","ojhhfs","gvdl","tiju","cjudi","gvdlbtt","bttipmf","jejpu","bttgvdl","cvuugvdl"];
     const chatBar = document.getElementById("chatbar");
     const enterBtn = document.getElementById("enterbtn");
     const content = document.getElementById("msgs");
+    const changeUsernameButton = document.getElementById("changeUsername");
     let username;
 
-    window.onload = function(){
-        username = localStorage.getItem("username");
+    function changeUsername(override) {
+        username = override ? null : localStorage.getItem("username");
         if (!username) {
             while (!username || username.length < 4) {
                 username = prompt("username (4+ characters): ")?.trim() || "";
@@ -33,6 +36,10 @@
             username = `${username}#${Math.floor(Math.random() * 10000)}`;
             localStorage.setItem("username", username);
         }
+    }
+
+    window.onload = function(){
+        changeUsername(false);
     };
 
     function decode(str){ return str.split('').map(c=>String.fromCharCode(c.charCodeAt(0)-1)).join(''); }
@@ -127,6 +134,10 @@
                 setTimeout(()=>{ canPost=true; }, delay);
 
             }catch(e){ console.error("Post error:", e); }
+        });
+
+        changeUsernameButton.addEventListener("click", _=>{
+            changeUsername(true);
         });
     })();
     </script>
