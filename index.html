@@ -78,7 +78,7 @@
                     div.classList.add("msg");
                     if (msgText.startsWith(username)) {
                         div.classList.add("your");
-                        div.innerHTML = msgText.replace(username, "You");
+                        div.innerHTML = msgText.replace(username, `You (${username})`);
                     } else {
                         div.innerHTML = msgText;
                     }
