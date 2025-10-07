@@ -9,6 +9,7 @@
         #enterbtn { position: fixed; left: 70%; top: 80%; width: 20%; height: 10%; transform: translate(-50%, -50%); }
         #msgs { display: flex; flex-direction: column; max-width: 80%; margin: 2em auto; gap: 0.3em; }
         .msg { padding: 0.5em 1em; border-radius: 12px; background-color: #f1f1f1; max-width: 70%; word-wrap: break-word; transition: transform 0.2s ease, background-color 0.2s ease; }
+        .msg .your { background-color: blueviolet; }
     </style>
 </head>
 <body>
@@ -21,6 +22,18 @@
     const chatBar = document.getElementById("chatbar");
     const enterBtn = document.getElementById("enterbtn");
     const content = document.getElementById("msgs");
+    let username;
+
+    window.onload = function(){
+        username = localStorage.getItem("username");
+        if (!username) {
+            while (!username || username.length < 4) {
+                username = prompt("username (4+ characters): ")?.trim() || "";
+            }
+            username = `${username}#${Math.floor(Math.random() * 10000)}`;
+            localStorage.setItem("username", username);
+        }
+    };
 
     function decode(str){ return str.split('').map(c=>String.fromCharCode(c.charCodeAt(0)-1)).join(''); }
     function normalizeText(str){ return str.normalize("NFD").replace(/[\u0300-\u036f]/g,""); }
@@ -63,7 +76,12 @@
                 data.forEach(msgText=>{
                     const div = document.createElement("div");
                     div.classList.add("msg");
-                    div.innerHTML = msgText;
+                    if (msgText.startsWith(username)) {
+                        div.classList.add("your");
+                        div.innerHTML = msgText.replace(username, "You");
+                    } else {
+                        div.innerHTML = msgText;
+                    }
                     content.appendChild(div);
                 });
                 content.scrollTop = content.scrollHeight;
@@ -76,7 +94,7 @@
             if(!canPost){ alert("Slowmode active! Go touch some grass."); return; }
             let msg = chatBar.value.trim();
             if(!msg) return;
-            msg = cleanText(msg);
+            msg = `${username}: ${cleanText(msg)}`;
 
             try{
                 // fetch current messages
@@ -84,17 +102,21 @@
                 const d = await res.json();
                 let data = d["_"] || [];
                 data.push(msg);
-
+                // post new message
                 await fetch("https://getpantry.cloud/apiv1/pantry/60a648db-d0da-463b-93f6-627dde4d4a73/basket/messages", {
                     method:"POST",
                     headers:{"Content-Type":"application/json"},
                     body:JSON.stringify({"_":data})
                 });
-
                 // update UI immediately
                 const div = document.createElement("div");
                 div.classList.add("msg");
-                div.innerHTML = msg;
+                if (msg.startsWith(username)) {
+                    div.innerHTML = msg.replace(username, "You");
+                    div.classList.add("your");
+                } else {
+                    div.innerHTML = msg;
+                }
                 content.appendChild(div);
                 content.scrollTop = content.scrollHeight;
                 chatBar.value = "";
